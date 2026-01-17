@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Cyber-Clicker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #e2e8f0;
+            overflow: hidden; /* Prevent scrolling on mobile while tapping */
+            user-select: none; /* Prevent text selection */
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .font-display {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Neon Glow Effects */
+        .neon-text-blue {
+            text-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6, 0 0 20px #2563eb;
+        }
+        .neon-text-pink {
+            text-shadow: 0 0 5px #ec4899, 0 0 10px #ec4899, 0 0 20px #db2777;
+        }
+        
+        .neon-box {
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3), inset 0 0 5px rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+        }
+
+        .neon-btn {
+            transition: all 0.1s;
+        }
+        .neon-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Main Button Pulse */
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 20px rgba(236, 72, 153, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(236, 72, 153, 0.7); }
+            100% { box-shadow: 0 0 20px rgba(236, 72, 153, 0.4); }
+        }
+        .main-btn-glow {
+            animation: pulse-glow 2s infinite;
+        }
+
+        /* Floating Number Animation */
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.2); opacity: 0; }
+        }
+        .floating-number {
+            position: absolute;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Scrollbar for upgrades */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row">
+
+    <!-- Left Panel: The Clicker Area -->
+    <div class="flex-1 flex flex-col items-center justify-center relative p-4 bg-gradient-to-b from-slate-900 to-slate-800 z-10">
+        
+        <!-- Stats Header -->
+        <div class="absolute top-0 w-full p-6 flex justify-between items-start">
+            <div>
+                <h1 class="font-display text-3xl md:text-4xl text-white neon-text-blue tracking-wider">CYBER<span class="text-pink-500">CLICK</span></h1>
+                <p class="text-slate-400 text-sm mt-1">SYSTEM V.1.0</p>
+            </div>
+            <div class="text-right">
+                <div class="text-slate-400 text-xs uppercase tracking-widest">Energy / Sec</div>
+                <div id="gps-display" class="font-display text-xl text-green-400">0.0</div>
+            </div>
+        </div>
+
+        <!-- Main Score -->
+        <div class="mb-10 text-center">
+            <div class="text-slate-400 text-sm uppercase tracking-widest mb-2">Total Energy</div>
+            <div id="score-display" class="font-display text-5xl md:text-7xl text-white neon-text-blue">0</div>
+        </div>
+
+        <!-- The Button -->
+        <div class="relative group">
+            <button id="main-button" class="w-48 h-48 md:w-64 md:h-64 rounded-full bg-slate-800 border-4 border-pink-500 main-btn-glow flex items-center justify-center relative z-20 neon-btn active:border-pink-400 overflow-hidden">
+                <div class="absolute inset-0 bg-pink-500 opacity-10 rounded-full group-hover:opacity-20 transition-opacity"></div>
+                <i class="fas fa-bolt text-6xl md:text-8xl text-pink-500 drop-shadow-[0_0_15px_rgba(236,72,153,0.8)]"></i>
+            </button>
+            
+            <!-- Ripple Container -->
+            <div id="ripple-container" class="absolute inset-0 pointer-events-none flex items-center justify-center"></div>
+        </div>
+
+        <!-- Tutorial / Message -->
+        <div id="message-area" class="mt-12 h-6 text-center text-pink-400 font-bold text-sm tracking-wide opacity-0 transition-opacity duration-500">
+            SYSTEM OVERLOAD IMMINENT
+        </div>
+
+    </div>
+
+    <!-- Right Panel: Upgrades -->
+    <div class="w-full md:w-96 bg-slate-900 border-t md:border-t-0 md:border-l border-slate-700 flex flex-col shadow-2xl z-20">
+        <div class="p-6 bg-slate-800 border-b border-slate-700">
+            <h2 class="font-display text-xl text-white tracking-wide flex items-center gap-2">
+                <i class="fas fa-microchip text-blue-500"></i> UPGRADES
+            </h2>
+        </div>
+
+        <div id="upgrades-list" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
+            <!-- Upgrades will be injected here via JS -->
+        </div>
+        
+        <!-- Version / Reset -->
+        <div class="p-4 bg-slate-900 border-t border-slate-700 text-center">
+             <button id="reset-btn" class="text-xs text-red-500 hover:text-red-400 uppercase tracking-widest hover:underline">Reset System</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Game State ---
+        const game = {
+            score: 0,
+            totalClicks: 0,
+            clickValue: 1,
+            gps: 0, // Gold per second
+            lastTick: Date.now(),
+            upgrades: [
+                {
+                    id: 'cursor',
+                    name: 'Neural Link',
+                    type: 'click', // Improves click value
+                    baseCost: 15,
+                    cost: 15,
+                    count: 0,
+                    power: 1, // +1 per click
+                    icon: 'fa-mouse-pointer',
+                    color: 'text-blue-400',
+                    desc: 'Enhances manual click efficiency.'
+                },
+                {
+                    id: 'auto1',
+                    name: 'Bit Miner v1',
+                    type: 'auto', // Passive income
+                    baseCost: 50,
+                    cost: 50,
+                    count: 0,
+                    power: 2, // +2 per second
+                    icon: 'fa-server',
+                    color: 'text-green-400',
+                    desc: 'Basic automated harvesting unit.'
+                },
+                {
+                    id: 'click2',
+                    name: 'Cyber Glove',
+                    type: 'click',
+                    baseCost: 250,
+                    cost: 250,
+                    count: 0,
+                    power: 5,
+                    icon: 'fa-hand-sparkles',
+                    color: 'text-purple-400',
+                    desc: 'Power glove for heavy tapping.'
+                },
+                {
+                    id: 'auto2',
+                    name: 'Quantum Server',
+                    type: 'auto',
+                    baseCost: 500,
+                    cost: 500,
+                    count: 0,
+                    power: 10,
+                    icon: 'fa-network-wired',
+                    color: 'text-yellow-400',
+                    desc: 'High-speed processing node.'
+                },
+                {
+                    id: 'auto3',
+                    name: 'AI Core',
+                    type: 'auto',
+                    baseCost: 2000,
+                    cost: 2000,
+                    count: 0,
+                    power: 45,
+                    icon: 'fa-brain',
+                    color: 'text-red-400',
+                    desc: 'Autonomous intelligence.'
+                },
+                {
+                    id: 'auto4',
+                    name: 'Dyson Swarm',
+                    type: 'auto',
+                    baseCost: 10000,
+                    cost: 10000,
+                    count: 0,
+                    power: 150,
+                    icon: 'fa-sun',
+                    color: 'text-orange-500',
+                    desc: 'Harvests star energy.'
+                }
+            ]
+        };
+
+        // --- DOM Elements ---
+        const scoreDisplay = document.getElementById('score-display');
+        const gpsDisplay = document.getElementById('gps-display');
+        const mainButton = document.getElementById('main-button');
+        const upgradesList = document.getElementById('upgrades-list');
+        const messageArea = document.getElementById('message-area');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // --- Audio Context (Simple synthesized sounds) ---
+        // Note: Browsers require interaction before playing audio. 
+        // We will initialize on first click.
+        let audioCtx;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playClickSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            // Random pitch for variety
+            osc.frequency.setValueAtTime(800 + Math.random() * 200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playUpgradeSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // --- Core Logic ---
+
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+            return Math.floor(num);
+        }
+
+        function updateDisplay() {
+            scoreDisplay.textContent = formatNumber(game.score);
+            gpsDisplay.textContent = game.gps.toFixed(1);
+            
+            // Check button states
+            game.upgrades.forEach(u => {
+                const btn = document.getElementById(`btn-${u.id}`);
+                if (btn) {
+                    if (game.score >= u.cost) {
+                        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        btn.classList.add('opacity-100', 'cursor-pointer', 'hover:bg-slate-700');
+                    } else {
+                        btn.classList.add('opacity-50', 'cursor-not-allowed');
+                        btn.classList.remove('opacity-100', 'cursor-pointer', 'hover:bg-slate-700');
+                    }
+                }
+            });
+        }
+
+        function createFloatingText(x, y, text) {
+            const el = document.createElement('div');
+            el.className = 'floating-number text-white text-2xl';
+            el.textContent = `+${text}`;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            // Random slight horizontal drift
+            const drift = (Math.random() - 0.5) * 40;
+            el.style.transform = `translateX(${drift}px)`;
+            
+            document.body.appendChild(el);
+            
+            setTimeout(() => {
+                el.remove();
+            }, 800);
+        }
+
+        function handleClick(e) {
+            initAudio();
+            playClickSound();
+
+            // Logic
+            game.score += game.clickValue;
+            game.totalClicks++;
+
+            // Visuals
+            // If it's a touch event, we might need different coords or handle multitouch
+            // e.clientX is fine for mouse and single touch usually maps well in simple handlers
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+
+            // Handle touch specific coords if needed (e.g. if e is touch event)
+            if(e.type === 'touchstart' && e.touches.length > 0) {
+                 clientX = e.touches[0].clientX;
+                 clientY = e.touches[0].clientY;
+            }
+
+            createFloatingText(clientX, clientY, formatNumber(game.clickValue));
+            updateDisplay();
+
+            // Occasional flavor text
+            if (game.totalClicks === 10) showMessage("SYSTEM ONLINE");
+            if (game.totalClicks === 50) showMessage("OPTIMIZING FLOW");
+            if (game.totalClicks === 100) showMessage("DATA STREAM STABLE");
+        }
+
+        function showMessage(msg) {
+            messageArea.textContent = msg;
+            messageArea.style.opacity = 1;
+            setTimeout(() => {
+                messageArea.style.opacity = 0;
+            }, 2000);
+        }
+
+        function buyUpgrade(id) {
+            const upgrade = game.upgrades.find(u => u.id === id);
+            if (!upgrade) return;
+
+            if (game.score >= upgrade.cost) {
+                initAudio();
+                playUpgradeSound();
+                
+                game.score -= upgrade.cost;
+                upgrade.count++;
+                
+                // Increase cost by 1.5x
+                upgrade.cost = Math.ceil(upgrade.baseCost * Math.pow(1.5, upgrade.count));
+                
+                // Apply effects
+                if (upgrade.type === 'click') {
+                    game.clickValue += upgrade.power;
+                } else if (upgrade.type === 'auto') {
+                    game.gps += upgrade.power;
+                }
+
+                // Update UI for this specific item
+                renderUpgrades(); 
+                updateDisplay();
+                
+                showMessage(`INSTALLED: ${upgrade.name}`);
+            }
+        }
+
+        function renderUpgrades() {
+            upgradesList.innerHTML = '';
+            game.upgrades.forEach(u => {
+                const item = document.createElement('div');
+                // Check affordability for initial render style
+                const canAfford = game.score >= u.cost;
+                const opacityClass = canAfford ? 'opacity-100 cursor-pointer hover:bg-slate-700' : 'opacity-50 cursor-not-allowed';
+                
+                item.className = `neon-box bg-slate-800 p-3 rounded-lg flex items-center justify-between transition-all select-none ${opacityClass}`;
+                item.id = `btn-${u.id}`;
+                
+                item.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded bg-slate-900 flex items-center justify-center border border-slate-700">
+                            <i class="fas ${u.icon} ${u.color} text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-white leading-tight">${u.name}</div>
+                            <div class="text-xs text-slate-400">${u.desc}</div>
+                            <div class="text-xs ${u.type === 'click' ? 'text-blue-400' : 'text-green-400'} mt-1">
+                                +${u.power} ${u.type === 'click' ? '/ click' : '/ sec'}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-slate-500 mb-1">LVL ${u.count}</div>
+                        <div class="text-pink-500 font-display font-bold">${formatNumber(u.cost)} <i class="fas fa-bolt text-xs"></i></div>
+                    </div>
+                `;
+
+                item.onclick = () => buyUpgrade(u.id);
+                upgradesList.appendChild(item);
+            });
+        }
+
+        // --- Game Loop ---
+        function gameLoop() {
+            const now = Date.now();
+            const delta = (now - game.lastTick) / 1000; // time in seconds
+            
+            if (delta >= 0.1) { // Update every 100ms for smoothness
+                if (game.gps > 0) {
+                    game.score += game.gps * delta;
+                    updateDisplay();
+                }
+                game.lastTick = now;
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- Event Listeners ---
+        mainButton.addEventListener('mousedown', handleClick);
+        // Prevent default double-tap zoom on mobile
+        mainButton.addEventListener('touchstart', (e) => {
+            e.preventDefault(); 
+            handleClick(e);
+        }, { passive: false });
+
+        // Add keyboard support (Spacebar / Enter)
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'Enter') {
+                // visual press effect
+                mainButton.classList.add('scale-95');
+                handleClick({ clientX: window.innerWidth/2, clientY: window.innerHeight/2, type: 'keydown' });
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+             if (e.code === 'Space' || e.code === 'Enter') {
+                mainButton.classList.remove('scale-95');
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if(confirm("WIPE SYSTEM MEMORY?")) {
+                location.reload();
+            }
+        });
+
+        // --- Initialization ---
+        renderUpgrades();
+        game.lastTick = Date.now();
+        requestAnimationFrame(gameLoop);
+
+    </script>
+</body>
+</html>
